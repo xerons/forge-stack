@@ -1,0 +1,45 @@
+# ForgeStack tool manifest (product-owned definitions). Installer commands are surfaced to users
+# with explicit approval before execution.
+
+[tools.agtx]
+required = true
+category = "workflow"
+description = "Workflow authority — Kanban, lifecycle, worktrees, worker dispatch."
+
+[tools.matt-skills]
+category = "skill-packs"
+description = "Matt Pocock skills (upstream). Install via upstream-supported mechanism."
+upstream_hint = "npx skills install mattpocock"
+
+[tools.superpowers]
+category = "skill-packs"
+description = "Superpowers discipline skills. Install via upstream-supported mechanism."
+upstream_hint = "npx skills install superpowers"
+
+[tools.bmad]
+category = "methodology"
+description = "BMAD planning/architecture/QA framework. Project-scoped (_bmad/ detected)."
+
+[tools.herdr]
+category = "runtime"
+description = "Herdr runtime/workspace for Manager + AGTX + Shell layout."
+
+[tools.rtk]
+category = "optimization"
+description = "Rust Token Killer. Opportunistic token reduction."
+
+[tools.code-server]
+category = "remote-ux"
+description = "code-server remote IDE (optional UX adapter)."
+
+# Agent CLIs: provider-agnostic. All are optional; routing is user-configured.
+[agents.codex]
+upstream_hint = "brew install --cask codex"
+[agents.claude]
+upstream_hint = "brew install claude"
+[agents.opencode]
+upstream_hint = "brew install opencode"
+[agents.gemini]
+upstream_hint = "npm install -g @google/gemini-cli"
+[agents.agy]
+upstream_hint = "curl -fsSL https://antigravity.google/install.sh | bash"  # official doc at time of writing
