@@ -35,13 +35,13 @@ Everything else is **detected, not bundled**. ForgeStack's `setup` command disco
 
 ForgeStack does not reimplement, vendor, or imply authorship of these upstream projects:
 
-- **AGTX** — workflow authority (task state, Kanban lifecycle, worktrees, worker dispatch)
-- **Herdr** — runtime workspace
-- **Agent CLIs** — Codex, Claude Code, OpenCode, Gemini, Antigravity, and others
-- **BMAD** — project-scoped method tooling
-- **Matt Pocock skills** — engineering skill suite
-- **Superpowers** — disciplined implementation workflow
-- **RTK** — token reduction
+- **[AGTX](https://github.com/fynnfluegge/agtx)** — workflow authority (task state, Kanban lifecycle, worktrees, worker dispatch)
+- **[Herdr](https://github.com/herdrdev/herdr)** — runtime workspace
+- **Agent CLIs** — [Codex](https://github.com/openai/codex), [Claude Code](https://github.com/anthropics/claude-code), [OpenCode](https://github.com/anomalyco/opencode), Gemini, Antigravity, and others
+- **[BMAD](https://github.com/bmad-code-org/BMAD-METHOD)** — project-scoped method tooling
+- **[Matt Pocock skills](https://github.com/mattpocock/skills)** — engineering skill suite
+- **[Superpowers](https://github.com/obra/superpowers)** — disciplined implementation workflow
+- **[RTK](https://github.com/rtk-ai/rtk)** — token reduction
 
 Each is represented through an adapter with detection, installation, version/compatibility checking, and configuration.
 
