@@ -42,15 +42,13 @@ ForgeStack does not reimplement, vendor, or imply authorship of these upstream p
 - **Matt Pocock skills** — engineering skill suite
 - **Superpowers** — disciplined implementation workflow
 - **RTK** — token reduction
-- **Caveman** — compressed commit/review messages
-- **code-server**, **Tailscale** — optional remote/UX integrations
 
 Each is represented through an adapter with detection, installation, version/compatibility checking, and configuration.
 
 ## Quick start
 
 ```bash
-git clone https://github.com/<owner>/forgestack
+git clone https://github.com/xerons/forge-stack.git
 cd forgestack
 ./install.sh
 ```
