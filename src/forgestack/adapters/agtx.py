@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .protocol import Adapter, CheckResult, DetectResult, InstallMethod
+from .protocol import Adapter, CheckResult, DetectResult, InstallMethod, detect_version
 
 AGTX_IDENTIFIER = "agtx"
 PLUGIN_NAME = "forgestack"
@@ -16,7 +16,7 @@ class AgtxAdapter(Adapter):
     upstream_hint = "via official AGTX installer (see README) — never vendor"
 
     def detect(self) -> DetectResult:
-        return DetectResult(*_detect("agtx", "--version"))
+        return DetectResult(*detect_version("agtx"))
 
     def is_compatible(self) -> bool | str:
         v = self.detect().version
@@ -36,26 +36,3 @@ class AgtxAdapter(Adapter):
             CheckResult("detected", self.detect().installed, self.display_name),
             CheckResult("version", self.is_compatible() is True, self.detect().version or ""),
         ]
-
-
-def _detect(cmd: str, version_flag: str) -> tuple[bool, str | None, str | None]:
-    import shutil
-    import subprocess
-
-    path = shutil.which(cmd)
-    if not path:
-        return False, None, None
-    try:
-        out = subprocess.run([path, version_flag], capture_output=True, text=True, timeout=5)
-        first = out.stdout.strip().splitlines()[0] if out.stdout.strip() else ""
-        version = _first_version(first)
-        return True, path, version
-    except Exception:
-        return True, path, None
-
-
-def _first_version(text: str) -> str | None:
-    import re
-
-    m = re.search(r"\d+\.\d+\.\d+", text)
-    return m.group(0) if m else None

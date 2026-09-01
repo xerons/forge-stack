@@ -1,0 +1,19 @@
+"""Smoke tests — CLI surface loads and version reports correctly."""
+
+from forgestack.cli import app
+from forgestack.commands.version import cli as version_cli
+from typer.testing import CliRunner
+
+
+def test_app_has_help() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "forgestack" in result.stdout.lower()
+
+
+def test_version_prints_package_version(capsys) -> None:
+    version_cli()
+    out = capsys.readouterr().out
+    assert "forgestack" in out
+    assert "0.1.0" in out

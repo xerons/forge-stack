@@ -8,9 +8,9 @@ internal emitter for the owned keys ForgeStack manages.
 
 from __future__ import annotations
 
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
-import tomllib
 
 from .paths import global_config_path, project_config_path
 
@@ -26,7 +26,7 @@ class Config:
     values: dict = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Config":
+    def from_dict(cls, data: dict) -> Config:
         mgr = data.get("manager", {})
         wf = data.get("workflow", {})
         return cls(

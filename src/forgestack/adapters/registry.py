@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from .agents import make_agent_adapter
 from .agtx import AgtxAdapter
 from .bmad import BmadAdapter
 from .code_server import CodeServerAdapter
 from .herdr import HerdrAdapter
 from .matt import MattAdapter
-from .agents import make_agent_adapter
 from .rtk import RtkAdapter
 from .superpowers import SuperpowersAdapter
 

@@ -2,8 +2,19 @@
 
 import typer
 
-from .commands import agents_cmd, board_cmd, doctor_cmd, inbox_cmd, init_cmd, manager_cmd, \
-    open_cmd, setup_cmd, status_cmd, update_cmd, version
+from .commands import (
+    agents_cmd,
+    board_cmd,
+    doctor_cmd,
+    inbox_cmd,
+    init_cmd,
+    manager_cmd,
+    open_cmd,
+    setup_cmd,
+    status_cmd,
+    update_cmd,
+    version,
+)
 
 app = typer.Typer(name="forgestack", help="Existing tools, one development workflow.")
 

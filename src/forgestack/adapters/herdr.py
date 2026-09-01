@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-import re
-import shutil
-import subprocess
-
-from .protocol import Adapter, CheckResult, DetectResult, InstallMethod
+from .protocol import Adapter, CheckResult, DetectResult, InstallMethod, detect_version
 
 
 class HerdrAdapter(Adapter):
@@ -15,16 +11,7 @@ class HerdrAdapter(Adapter):
     category = "runtime"
 
     def detect(self) -> DetectResult:
-        path = shutil.which("herdr")
-        if not path:
-            return DetectResult(False)
-        try:
-            out = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=5)
-            first = out.stdout.strip()
-            m = re.search(r"\d+\.\d+\.\d+", first)
-            return DetectResult(True, path, m.group(0) if m else None)
-        except Exception:
-            return DetectResult(True, path, None)
+        return DetectResult(*detect_version("herdr"))
 
     def is_compatible(self) -> bool | str:
         return True
