@@ -10,6 +10,7 @@ from .commands import (
     init_cmd,
     manager_cmd,
     open_cmd,
+    phases_cmd,
     setup_cmd,
     status_cmd,
     update_cmd,
@@ -72,3 +73,6 @@ def doctor() -> None:
 @app.command()
 def update() -> None:
     update_cmd.cli()
+
+
+app.add_typer(phases_cmd.phases_app)

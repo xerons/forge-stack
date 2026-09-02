@@ -42,3 +42,10 @@ def cli(dry_run: bool = False) -> None:
             console.print("(approved) — executing upstream hints manually (automation disabled)")
         else:
             console.print("(skipped) — run `forgestack setup` again after installing.")
+
+    from rich.prompt import Confirm
+
+    if Confirm.ask("Design your workflow phases now? (forgestack phases)", default=False):
+        from .phases_cmd import scaffold
+
+        scaffold()
