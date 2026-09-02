@@ -99,6 +99,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the full design.
 | `forgestack board` | Open or attach AGTX |
 | `forgestack status` | Compact engineering-view summary |
 | `forgestack inbox` | Human Inbox: decisions, blocked tasks, approvals |
+| `forgestack phases` | Design and apply the workflow phase model (scaffold → design → apply) |
 | `forgestack doctor` | Diagnose without mutating unless repair is approved |
 | `forgestack update` | Update ForgeStack, then report external dependency updates |
 
