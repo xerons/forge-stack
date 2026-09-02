@@ -41,3 +41,13 @@ def test_scaffold_writes_project_config(tmp_path, monkeypatch):
     raw = tomllib.loads(cfg_path.read_text())
     assert [p["key"] for p in raw["workflow"]["phases"]] == ["planning", "running", "review"]
     assert raw["workflow"]["research"] is False
+
+
+def test_phase_designer_skill_asset():
+    from pathlib import Path
+
+    skill = Path("skills/forgestack/phase-designer/SKILL.md")
+    assert skill.exists()
+    text = skill.read_text()
+    assert text.startswith("---\nname: phase-designer")
+    assert "coverage matrix" in text
