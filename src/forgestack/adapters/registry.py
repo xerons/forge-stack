@@ -10,6 +10,7 @@ from .bmad import BmadAdapter
 from .code_server import CodeServerAdapter
 from .herdr import HerdrAdapter
 from .matt import MattAdapter
+from .ponytail import PonytailAdapter
 from .rtk import RtkAdapter
 from .superpowers import SuperpowersAdapter
 
@@ -28,6 +29,7 @@ def registry():
         BmadAdapter(),
         MattAdapter(),
         SuperpowersAdapter(),
+        PonytailAdapter(),
         RtkAdapter(),
         CodeServerAdapter(),
         HerdrAdapter(),

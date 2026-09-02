@@ -1,8 +1,9 @@
 """Smoke tests — CLI surface loads and version reports correctly."""
 
+from typer.testing import CliRunner
+
 from forgestack.cli import app
 from forgestack.commands.version import cli as version_cli
-from typer.testing import CliRunner
 
 
 def test_app_has_help() -> None:

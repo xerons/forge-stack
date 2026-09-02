@@ -16,6 +16,11 @@ category = "skill-packs"
 description = "Superpowers discipline skills. Install via upstream-supported mechanism."
 upstream_hint = "npx skills install superpowers"
 
+[tools.ponytail]
+category = "skill-packs"
+description = "Lazy senior-dev discipline (YAGNI ladder). Install via upstream (agent plugin)."
+upstream_hint = "add @dietrichgebert/ponytail to opencode.json plugins (see upstream repo)"
+
 [tools.bmad]
 category = "methodology"
 description = "BMAD planning/architecture/QA framework. Project-scoped (_bmad/ detected)."

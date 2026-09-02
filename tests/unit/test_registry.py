@@ -12,6 +12,7 @@ def test_registry_returns_sorted_adapter_list() -> None:
     assert "bmad" in names
     assert "matt" in names
     assert "superpowers" in names
+    assert "ponytail" in names
     assert "rtk" in names
 
 

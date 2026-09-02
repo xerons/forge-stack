@@ -79,6 +79,11 @@ Do:
 6. Perform a self-review before declaring completion.
 7. Keep changes scoped to the approved task.
 
+If ponytail discipline is available, apply its YAGNI/reuse/stdlib
+ladder and minimal-diff guidance to avoid over-engineering. Otherwise
+follow the equivalent principles: smallest change that works, no
+speculative abstraction, no scaffolding for later.
+
 Do NOT silently modify or reinterpret approved requirements.
 
 If the specification is materially ambiguous or contradictory,
