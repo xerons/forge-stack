@@ -8,9 +8,9 @@ import typer
 from rich.console import Console
 from rich.prompt import Confirm, Prompt
 
+from .. import paths
 from ..adapters.registry import registry
 from ..config import Config, _deep_merge, render_toml
-from ..paths import git_root
 from ..workflow.model import AGENT_PHASE_KEYS, ALLOWED_PHASE_KEYS, PhaseDef, PhaseModel
 from ..workflow.validate import validate
 
@@ -46,7 +46,7 @@ def _write_scope(
 def scaffold(scope: str = typer.Option("project", "--scope", help="project or global")) -> None:
     """Collect the deterministic shape: which phases, research/cyclic, agents, skills, team."""
     console = Console()
-    root = git_root(Path.cwd()) if scope == "project" else None
+    root = paths.git_root(Path.cwd()) if scope == "project" else None
     if scope == "project" and root is None:
         console.print("[red]Not a Git repository. Use --scope global.[/red]")
         raise SystemExit(1)
@@ -85,13 +85,9 @@ def scaffold(scope: str = typer.Option("project", "--scope", help="project or gl
         phases.append(phase)
 
     if scope == "project":
-        from ..paths import project_config_path
-
-        path = project_config_path(root)
+        path = paths.project_config_path(root)
     else:
-        from ..paths import global_config_path
-
-        path = global_config_path()
+        path = paths.global_config_path()
     _write_scope(path, phases, research, cyclic)
     console.print("Scaffold written. Next: [bold]forgestack phases design[/bold] to fill content.")
 
@@ -102,7 +98,7 @@ def design(scope: str = typer.Option("project", "--scope", help="project or glob
     console = Console()
     from ..config import load_config
 
-    root = git_root(Path.cwd()) if scope == "project" else None
+    root = paths.git_root(Path.cwd()) if scope == "project" else None
     cfg = load_config(root)
     if not cfg.phases:
         console.print("[yellow]No phases in config yet — run 'phases scaffold' first.[/yellow]")
@@ -112,7 +108,7 @@ def design(scope: str = typer.Option("project", "--scope", help="project or glob
 
     agent = next((p.agent for p in cfg.phases if p.agent), None) or cfg.manager_agent or "codex"
     cmd = _agent_command(agent)
-    if cmd is None or not git_root(Path.cwd()):
+    if cmd is None or not paths.git_root(Path.cwd()):
         console.print(
             f"[yellow]Agent '{agent}' has no one-shot launcher here. Edit purpose/prompt "
             "directly in your config, or run 'phases apply' to ship default prompts.[/yellow]"
@@ -146,7 +142,7 @@ def design(scope: str = typer.Option("project", "--scope", help="project or glob
 def apply(scope: str = typer.Option("project", "--scope", help="project or global")) -> None:
     """Render plugin.toml + [agents] wiring, backup, diff, y/N write."""
     console = Console()
-    root = git_root(Path.cwd()) if scope == "project" else None
+    root = paths.git_root(Path.cwd()) if scope == "project" else None
     from ..config import load_config
 
     cfg = load_config(root)
@@ -263,20 +259,16 @@ def _agent_command(agent: str) -> list[str] | None:
 
 
 def _scope_path(scope: str, root: Path | None) -> Path:
-    from ..paths import global_config_path, project_config_path
-
     if scope == "project" and root is not None:
-        return project_config_path(root)
-    return global_config_path()
+        return paths.project_config_path(root)
+    return paths.global_config_path()
 
 
 def _plugin_path(scope: str, root: Path | None) -> Path:
     if scope == "project" and root is not None:
         base = root / ".agtx" / "plugins" / "forgestack"
     else:
-        from ..paths import config_dir
-
-        base = config_dir() / "agtx" / "plugins" / "forgestack"
+        base = paths.config_dir() / "agtx" / "plugins" / "forgestack"
     return base / "plugin.toml"
 
 

@@ -1,3 +1,4 @@
+import pytest
 from typer.testing import CliRunner
 
 from forgestack.cli import app
@@ -51,3 +52,38 @@ def test_phase_designer_skill_asset():
     text = skill.read_text()
     assert text.startswith("---\nname: phase-designer")
     assert "coverage matrix" in text
+
+
+def test_apply_skips_when_model_invalid(tmp_path, monkeypatch):
+    from forgestack import paths
+    from forgestack.commands.phases_cmd import apply
+
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    cfg_path = proj / ".forgestack.toml"
+    cfg_path.write_text(
+        '[workflow]\nresearch = true\ncyclic = false\n\n[[workflow.phases]]\n'
+        'key = "populate"\n'
+    )
+    monkeypatch.setattr(paths, "project_config_path", lambda *a, **k: cfg_path)
+    monkeypatch.setattr(paths, "git_root", lambda *a, **k: proj)
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "n")
+    with pytest.raises(SystemExit):
+        apply(scope="project")
+    plugin = proj / ".agtx" / "plugins" / "forgestack" / "plugin.toml"
+    assert not plugin.exists()
+
+
+def test_apply_default_model_with_no_config(tmp_path, monkeypatch):
+    from forgestack import paths
+    from forgestack.commands.phases_cmd import apply
+
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    monkeypatch.setattr(paths, "project_config_path", lambda *a, **k: proj / ".forgestack.toml")
+    monkeypatch.setattr(paths, "git_root", lambda *a, **k: proj)
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "y")
+    apply(scope="project")
+    plugin = proj / ".agtx" / "plugins" / "forgestack" / "plugin.toml"
+    assert plugin.exists()
+    assert "cyclic = false" in plugin.read_text()

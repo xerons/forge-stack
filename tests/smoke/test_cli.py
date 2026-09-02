@@ -18,3 +18,10 @@ def test_version_prints_package_version(capsys) -> None:
     out = capsys.readouterr().out
     assert "forgestack" in out
     assert "0.1.0" in out
+
+
+def test_phases_smoke() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["phases", "--help"])
+    assert result.exit_code == 0
+    assert "scaffold" in result.stdout
