@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .paths import global_config_path, project_config_path
+from .workflow.model import PhaseDef
 
 
 @dataclass
@@ -24,6 +25,9 @@ class Config:
     integrations: dict[str, str | bool] = field(default_factory=dict)
     runtime_workspace: str | None = None
     values: dict = field(default_factory=dict)
+    workflow_research: bool = True
+    workflow_cyclic: bool = False
+    phases: list[PhaseDef] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict) -> Config:
@@ -36,6 +40,9 @@ class Config:
             agents=data.get("agents", {}),
             integrations=data.get("integrations", {}),
             runtime_workspace=data.get("runtime", {}).get("workspace"),
+            workflow_research=bool(wf.get("research", True)),
+            workflow_cyclic=bool(wf.get("cyclic", False)),
+            phases=_parse_phases(wf.get("phases")),
             values=data,
         )
 
@@ -71,7 +78,30 @@ def render_toml(config: Config) -> str:
     lines = [f'profile = "{config.profile}"', ""]
     if config.manager_agent:
         lines += ["[manager]", f'agent = "{config.manager_agent}"', ""]
-    lines += ["[workflow]", f'engine = "{config.workflow_engine}"', ""]
+    lines += ["[workflow]", _fmt_kv("engine", config.workflow_engine)]
+    lines += [
+        f"research = {str(config.workflow_research).lower()}",
+        f"cyclic = {str(config.workflow_cyclic).lower()}",
+        "",
+    ]
+    for p in config.phases:
+        lines.append("[[workflow.phases]]")
+        lines.append(_fmt_kv("key", p.key))
+        if p.label:
+            lines.append(_fmt_kv("label", p.label))
+        if p.purpose:
+            lines.append(f'purpose = """{p.purpose}"""')
+        if p.agent:
+            lines.append(_fmt_kv("agent", p.agent))
+        if p.skills:
+            lines.append(_fmt_kv("skills", p.skills))
+        if p.team:
+            lines.append(_fmt_kv("team", p.team))
+        if p.artifact:
+            lines.append(_fmt_kv("artifact", p.artifact))
+        if p.prompt:
+            lines.append(f'prompt = """{p.prompt}"""')
+        lines.append("")
     if config.agents:
         lines.append("[agents]")
         for key, val in config.agents.items():
@@ -90,4 +120,32 @@ def render_toml(config: Config) -> str:
 def _fmt_kv(key: str, val) -> str:
     if isinstance(val, bool):
         return f"{key} = {'true' if val else 'false'}"
+    if isinstance(val, list):
+        items = ", ".join(f'"{v}"' for v in val)
+        return f"{key} = [{items}]"
     return f'{key} = "{val}"'
+
+
+def _parse_phases(raw: object) -> list[PhaseDef]:
+    if not isinstance(raw, list):
+        return []
+    out: list[PhaseDef] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key") or "")
+        if not key:
+            continue
+        out.append(
+            PhaseDef(
+                key=key,
+                label=str(item.get("label") or ""),
+                purpose=str(item.get("purpose") or ""),
+                agent=str(item.get("agent") or ""),
+                skills=[str(s) for s in item.get("skills", [])],
+                team=[str(t) for t in item.get("team", [])],
+                artifact=str(item["artifact"]) if item.get("artifact") else None,
+                prompt=str(item.get("prompt") or ""),
+            )
+        )
+    return out
