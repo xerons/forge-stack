@@ -27,15 +27,9 @@ def cli() -> None:
         )
         new_agents[role] = choice
 
-    merged = Config(
-        profile=cfg.profile,
-        manager_agent=cfg.manager_agent,
-        workflow_engine=cfg.workflow_engine,
-        agents=new_agents,
-        integrations=cfg.integrations,
-        runtime_workspace=cfg.runtime_workspace,
-    )
-    _write_config_safe(merged, console)
+    # Mutate the loaded cfg so phases/workflow flags/values survive the write.
+    cfg.agents = new_agents
+    _write_config_safe(cfg, console)
 
 
 def _write_config_safe(cfg: Config, console: Console) -> None:

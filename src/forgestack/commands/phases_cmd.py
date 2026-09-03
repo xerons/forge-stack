@@ -22,6 +22,8 @@ _AGENT_CMDS = {
     "codex": ["codex", "exec"],
     "claude": ["claude", "-p"],
     "opencode": ["opencode", "run"],
+    "gemini": ["gemini", "-p"],
+    "agy": ["agy", "run"],
 }
 
 

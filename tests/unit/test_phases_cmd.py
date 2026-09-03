@@ -17,6 +17,8 @@ def test_phases_group_registered():
 
 def test_agent_command_map():
     assert _agent_command("codex") == ["codex", "exec"]
+    assert _agent_command("gemini") == ["gemini", "-p"]
+    assert _agent_command("agy") == ["agy", "run"]
     assert _agent_command("unknown-agent") is None
 
 
