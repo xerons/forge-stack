@@ -3,14 +3,14 @@
 from rich.console import Console
 from rich.prompt import Prompt
 
+from .. import paths
 from ..adapters.registry import registry
 from ..config import Config, load_config, render_toml
-from ..paths import git_root
 
 
 def cli() -> None:
     console = Console()
-    cfg = load_config(git_root(__import__("pathlib").Path.cwd()))
+    cfg = load_config(paths.git_root(__import__("pathlib").Path.cwd()))
     providers = [a.name for a in registry() if getattr(a, "category", "") == "agents"]
 
     roles = ["research", "planning", "running", "review"]
@@ -33,13 +33,12 @@ def cli() -> None:
 
 
 def _write_config_safe(cfg: Config, console: Console) -> None:
-    from ..paths import global_config_path
+    from ..managed import write_managed
 
-    path = global_config_path()
-    if path.exists():
-        backup = path.with_suffix(".toml.bak")
-        backup.write_text(path.read_text())
-        console.print(f"Backed up current global config to {backup}")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_toml(cfg))
-    console.print(f"Written unified config at {path}")
+    path = paths.config_dir() / "config.toml"
+    content = render_toml(cfg)
+    result = write_managed(path, paths.config_dir(), content, source="config.toml")
+    if result == "skipped":
+        console.print("[yellow]Skipped config.toml — user-modified or foreign.[/yellow]")
+    else:
+        console.print(f"Written unified config at {path}")

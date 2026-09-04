@@ -7,8 +7,12 @@ from forgestack.commands import agents_cmd
 
 
 def _seed_global_config(path) -> None:
+    from forgestack.managed import write_managed
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    write_managed(
+        path,
+        path.parent,
         '''profile = "default"
 
 [manager]
@@ -35,7 +39,8 @@ review = "codex"
 
 [integrations]
 herdr = true
-'''
+''',
+        source="config.toml",
     )
 
 

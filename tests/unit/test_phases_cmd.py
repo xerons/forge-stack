@@ -89,3 +89,47 @@ def test_apply_default_model_with_no_config(tmp_path, monkeypatch):
     plugin = proj / ".agtx" / "plugins" / "forgestack" / "plugin.toml"
     assert plugin.exists()
     assert "cyclic = false" in plugin.read_text()
+
+
+def test_apply_writes_through_manifest(tmp_path, monkeypatch):
+    from forgestack import paths
+    from forgestack.commands.phases_cmd import apply
+    from forgestack.managed import MANIFEST_NAME
+
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    monkeypatch.setattr(paths, "project_config_path", lambda *a, **k: proj / ".forgestack.toml")
+    monkeypatch.setattr(paths, "git_root", lambda *a, **k: proj)
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "y")
+    apply(scope="project")
+
+    plugin = proj / ".agtx" / "plugins" / "forgestack" / "plugin.toml"
+    assert plugin.exists()
+    manifest = proj / MANIFEST_NAME
+    assert manifest.exists()
+    import json
+    data = json.loads(manifest.read_text())
+    assert "files" in data
+    rel = plugin.relative_to(proj).as_posix()
+    assert rel in data["files"]
+    assert data["files"][rel]["source"] == "agtx/plugins/forgestack/plugin.toml"
+
+
+def test_apply_skipped_when_user_modified(tmp_path, monkeypatch):
+    from forgestack import paths
+    from forgestack.commands.phases_cmd import apply
+
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    monkeypatch.setattr(paths, "project_config_path", lambda *a, **k: proj / ".forgestack.toml")
+    monkeypatch.setattr(paths, "git_root", lambda *a, **k: proj)
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "y")
+    apply(scope="project")
+
+    plugin = proj / ".agtx" / "plugins" / "forgestack" / "plugin.toml"
+    assert plugin.exists()
+    plugin.write_text("# user edit\n" + plugin.read_text())
+
+    apply(scope="project")
+    content = plugin.read_text()
+    assert content.startswith("# user edit\n")

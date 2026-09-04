@@ -11,6 +11,7 @@ from rich.prompt import Confirm, Prompt
 from .. import paths
 from ..adapters.registry import registry
 from ..config import Config, _deep_merge, render_toml
+from ..managed import write_managed
 from ..workflow.model import AGENT_PHASE_KEYS, ALLOWED_PHASE_KEYS, PhaseDef, PhaseModel
 from ..workflow.validate import validate
 
@@ -162,12 +163,10 @@ def apply(scope: str = typer.Option("project", "--scope", help="project or globa
     from ..workflow.renderer import render_agents_config, render_plugin_toml
 
     plugin_path = _plugin_path(scope, root)
-    backup = _backup(plugin_path)
-    if backup:
-        console.print(f"Backed up to {backup}")
+    manifest_root = root if scope == "project" and root is not None else paths.config_dir()
     rendered = render_plugin_toml(model)
     plugin_path.parent.mkdir(parents=True, exist_ok=True)
-    _write_with_diff(console, plugin_path, rendered)
+    _write_with_diff(console, plugin_path, rendered, manifest_root)
     agents = render_agents_config(model)
     if agents:
         console.print("AGTX [agents] wiring to add to your agtx config.toml:")
@@ -274,15 +273,7 @@ def _plugin_path(scope: str, root: Path | None) -> Path:
     return base / "plugin.toml"
 
 
-def _backup(path: Path) -> Path | None:
-    if not path.exists():
-        return None
-    backup = path.with_suffix(path.suffix + ".bak")
-    backup.write_text(path.read_text())
-    return backup
-
-
-def _write_with_diff(console: Console, path: Path, new: str) -> None:
+def _write_with_diff(console: Console, path: Path, new: str, manifest_root: Path) -> None:
     import difflib
 
     old = path.read_text() if path.exists() else ""
@@ -292,7 +283,10 @@ def _write_with_diff(console: Console, path: Path, new: str) -> None:
     for line in difflib.unified_diff(old.splitlines(), new.splitlines(), lineterm=""):
         console.print(line)
     if Confirm.ask("Write plugin.toml?"):
-        path.write_text(new)
-        console.print(f"Wrote {path}")
+        result = write_managed(path, manifest_root, new, source="agtx/plugins/forgestack/plugin.toml")
+        if result == "skipped":
+            console.print("[yellow]Skipped plugin.toml — user-modified or foreign.[/yellow]")
+        else:
+            console.print(f"Wrote {path}")
     else:
         console.print("Skipped.")
