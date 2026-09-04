@@ -12,7 +12,7 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .paths import global_config_path, project_config_path
+from . import paths
 from .workflow.model import PhaseDef
 
 
@@ -65,10 +65,10 @@ def _read_toml(path: Path) -> dict:
 
 
 def load_config(project_root: Path | None = None, env: dict | None = None) -> Config:
-    global_cfg = _read_toml(global_config_path(env))
+    global_cfg = _read_toml(paths.global_config_path(env))
     project_cfg = {}
     if project_root is not None:
-        project_cfg = _read_toml(project_config_path(project_root))
+        project_cfg = _read_toml(paths.project_config_path(project_root))
     merged = _deep_merge(global_cfg, project_cfg)
     return Config.from_dict(merged)
 
