@@ -40,8 +40,9 @@ configured, the current default model (research + planning + running + review) i
   phase agent + skill packs, and (planning, opt-in) a team roster. Deterministic.
 - `forgestack phases design` — an agent fills per-phase purpose/prompt (reference
   `skills/forgestack/phase-designer`). Falls back to defaults when unavailable.
-- `forgestack phases apply` — validates, backs up, diffs, then (on y/N) writes the AGTX
-  `plugin.toml` and prints the `[agents]` wiring for your agtx config.toml.
+- `forgestack phases apply` — validates, diffs, then (on y/N) writes the AGTX
+  `plugin.toml` and prints the `[agents]` wiring for your agtx config.toml. Writes are
+  manifest-protected: a `plugin.toml` you have edited since the last write is preserved, not overwritten.
 
 ## Multidisciplinary sprint-planning (planning `team`, opt-in)
 

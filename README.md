@@ -29,7 +29,7 @@ forgestack update
 
 ForgeStack itself is a thin Python CLI (`forgestack` on PATH).
 
-Everything else is **detected, not bundled**. ForgeStack's `setup` command discovers what's already on your machine and offers to install missing pieces through their official upstream methods — with your approval.
+Everything else is **detected, not bundled**. ForgeStack's `setup` command discovers what's already on your machine and offers to install missing pieces through their official upstream methods — with your approval. It also installs ForgeStack's own assets (the `forgestack` skill suite and AGTX plugin) — globally by default, or per-project with `--scope project`. All ForgeStack installs are hash-tracked so your edits are never silently overwritten.
 
 ## What remains external?
 
@@ -56,7 +56,8 @@ cd forgestack
 Then, from any Git repository:
 
 ```bash
-forgestack setup     # detect + (with approval) install external tools, write global config
+forgestack setup     # detect + (with approval) install tools, install ForgeStack assets, write global config
+forgestack setup --scope project   # install ForgeStack assets into this project
 forgestack init      # validate + prepare this project
 forgestack manager   # launch the Manager
 ```
@@ -91,7 +92,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the full design.
 
 | Command | Purpose |
 | --- | --- |
-| `forgestack setup` | Machine/global bootstrap: discovery, capability selection, install, global config |
+| `forgestack setup` | Machine/global bootstrap: discovery, install tools (with approval), install ForgeStack assets, global config (`--scope project` installs assets per-project) |
 | `forgestack init` | Project bootstrap: validate Git repo, detect BMAD, verify compatibility |
 | `forgestack agents` | Dynamic provider/CLI routing configuration |
 | `forgestack manager` | Persistent human-facing entry point |

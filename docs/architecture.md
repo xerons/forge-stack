@@ -23,15 +23,25 @@ ForgeStack is a thin, opinionated **integration/orchestration layer** over exter
 - `forgestack/cli.py` — Typer root app. Commands are thin wrappers over `commands/*`.
 - `forgestack/config.py` — global/project TOML load + deep merge; tiny writer for owned keys.
 - `forgestack/paths.py` — global/project path resolution.
+- `forgestack/managed.py` — managed-file ownership manifest: hash-tracked writes per install root with atomic save. `check()` returns `ABSENT/SAFE/MODIFIED/FOREIGN`; `write_managed()` writes only `ABSENT/SAFE` files and preserves `MODIFIED`/`FOREIGN`. Manifest lives at `<root>/.forgestack-managed.json`.
+- `forgestack/assets.py` — locates product-owned installable assets in the source tree (`skills/forgestack/`, `agtx/plugins/forgestack/plugin.toml`).
 - `forgestack/adapters/protocol.py` — the single adapter Protocol each tool implements.
 - `forgestack/adapters/registry.py` — manifest-driven list of adapters by category.
-- `forgestack/installers/` — brew / npm / pipx / curl-script / manual backends. Install plans are generated, displayed, approved (`y/N`), then executed.
-- `forgestack/workflow/` — AGTX routing mapping and render.
-- `forgestack/doctor/` — validation checks across config/adapters/plugin.
-- `forgestack/manager/` — thin wrappers invoking herdr/AGTX.
+- `forgestack/commands/` — one module per command. `setup` detects + installs ForgeStack assets; `phases` and `agents` write config/plugin through `write_managed`.
+- `forgestack/workflow/` — AGTX phase model, config parsing, validation, and plugin render.
 - `skills/forgestack/` — product-owned skill suite (migrated from scrum-stack prototype).
-- `agtx/plugins/forgestack/plugin.toml` — ForgeStack-owned AGTX plugin.
-- `manifests/tools.toml` + `manifests/compatibility.toml` — data-driven tools and version policy.
+- `agtx/plugins/forgestack/plugin.toml` — ForgeStack-owned AGTX plugin (installed from source via `assets.py`).
+- `manifests/tools.toml` + `manifests/compatibility.toml` — data-driven tools/version policy (planned: consumed by future install/update stages; not yet read at runtime).
+
+## Managed-file ownership
+
+Files ForgeStack writes are tracked in a per-install-root manifest (`.forgestack-managed.json`) so updates never overwrite user edits. When a write is attempted:
+
+- file absent from disk or unchanged since install → **written** (hash recorded/updated)
+- tracked file the user edited (hash differs) → **preserved** + warning
+- untracked, non-empty file at the target path (foreign) → **never overwritten** + warning
+
+The manifest is a single JSON file per install root; keys are paths relative to that root. This protects `setup` asset installs, `phases apply`, and `agents` writes.
 
 ## Style-ish rules
 
