@@ -26,8 +26,11 @@ def version_cmd() -> None:
 
 
 @app.command()
-def setup(dry_run: bool = typer.Option(False, "--dry-run")) -> None:
-    setup_cmd.cli(dry_run=dry_run)
+def setup(
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    scope: str = typer.Option("global", "--scope", help="global or project"),
+) -> None:
+    setup_cmd.cli(dry_run=dry_run, scope=scope)
 
 
 @app.command()
