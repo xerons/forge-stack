@@ -1,284 +1,160 @@
-# ForgeStack Demo — "Create a small game prototype" — Design
+# ForgeStack AI Team Portfolio Demo — Design
 
-**Date:** 2026-09-05 (spec review rev. 2)
-**Status:** Revised per spec review findings 1–6 (blocking findings 1–2 resolved)
-**Builds on:** ForgeStack v0.2 (phase model, managed-file manifest, asset install, setup --scope)
-
-### Revision summary (spec review, 6 findings)
-
-| # | Finding | Resolution (this revision) |
-|---|---|---|
-| 1 | Live update orchestration undefined (no card create/advance command exists) | §7 defines the two concrete drivers: exact AGTX command set (path A, probe-gated) OR the committed orchestration script running phase prompts against the configured agent (path B). No unbacked "AGTX-independent orchestration" prose. |
-| 2 | Fallback can't show PM workflow | §7 + §8: fallback for the card-move moment is the **pre-recorded phase replay clip** (local file) of that exact update story moving research→planning→running; golden path still ends with the updated game open in the browser. Narrative unchanged; fallback is explicitly a recorded replay. |
-| 3 | Update story has no concrete requirement | §6.1 adds a fixed story: title, body, baseline, change, browser-visible acceptance criteria. Rehearsal/verification now measurable. |
-| 4 | `research` boolean vs phase list conflict | §5.1 + implementation: phase **list is canonical**; renderer drops a `research` phase when `workflow_research=false`; validate warns on mismatch. Small in-scope hardening. |
-| 5 | offline/zero-install underspecified; game skills not in ForgeStack suite | §2 + §5.2: game skills live in the user's skill dirs (documented precondition, not vendored); **Phaser is bundled locally** in the demo repo (no CDN) so the game runs offline from a static file. |
-| 6 | Agent-authored prompts break TOML (`"""` unescaped) | §8: serializer escaping + `tomllib.loads()` validation gate before any write. Small in-scope hardening. |
+**Date:** 2026-09-05 (revision 3)
+**Status:** Revised for the agreed two preparation phases and optional live update; readiness remains unverified.
+**Replaces:** The earlier game-generation/phase-prompt demo design at this path.
+**Plan:** [Implementation plan](../plans/2026-09-05-forgestack-demo.md)
 
 ## 1. Purpose
 
-Plan and build ForgeStack's **first demo**: demonstrate the tool creating a small
-freshly-generated web game prototype, run live at a pitch with a committed golden path
-as fallback. The demo doubles as a **portfolio centerpiece across four disciplines** —
-Engineering, AI, Project Management, Game Development — and produces a shareable,
-browser-runnable game prototype plus a reusable case study.
+Demonstrate: **“I engineered ForgeStack to coordinate my own AI development team. I act as Product Owner, and the team produces a playable game prototype.”**
 
-### Goals
+ForgeStack owns integration, configuration, workflow policy, skills, and user-facing entry points. AGTX owns task state and worker lifecycle; Codex supplies the executing agents. Attribute each tool accurately. The prototype is the team's delivered product and evidence of the workflow working.
 
-- Show ForgeStack turning a plain repo into a game prototype through its
-  `research → planning → running → review` phase model.
-- Open with a finished, playable game *"created by ForgeStack"*, then go live with a
-  second, fast-finishing **update story** through the same configured phases.
-- Land a portfolio artifact bundle (repo + case study + captured runs + game + decision log).
-- Never depend on live success: a playable game exists in the golden path at all times.
+| Portfolio skill | Required evidence |
+| --- | --- |
+| Engineering | ForgeStack integration changes, architecture decisions, regression checks, reproducible setup |
+| AI | Persistent manager, distinct worker sessions, phase instructions, artifact handoffs, independent review |
+| Project management | Product goal, prioritized backlog, scope decisions, blocker handling, progress reports, PO acceptance |
 
-### Non-goals
+The team is Scrum-inspired. Do not claim formal ceremonies or roles that the run does not demonstrate. A prompt simulating several perspectives is not evidence of several executing agents.
 
-- No new ForgeStack features (demo uses v0.2 surface as-is). Exception: the two small
-  hardening fixes in §8.1 (research-flag respected; TOML escaping + parse gate) are
-  explicitly in scope because the demo's golden-path `plugin.toml` cannot be reliable
-  without them.
-- No AGTX runtime repair beyond a bounded probe of what's reliable.
-- No second game, no multiplayer/networking, no packaging/distribution of the game.
+## 2. Delivery phases and gates
 
-## 2. Demo surface (what ForgeStack actually shows)
+### Phase 1 — Fix and verify ForgeStack
 
-| Command | Role in demo |
-|---|---|
-| `forgestack setup [--scope global\|project]` | Detects tools, installs ForgeStack skill suite + AGTX plugin, hash-tracked via `.forgestack-managed.json` (user edits preserved) |
-| `forgestack phases scaffold / design / apply` | Scaffold = deterministic phase shape; design = agent fills per-phase purpose/prompt; apply = render + diff + y/N write `plugin.toml` |
-| Phase model | `research / planning / running / review` (+ `preresearch`), `{task}`-anchored prompts, per-phase agent/skills, opt-in planning `team` → coverage matrix |
-| `forgestack status / doctor / inbox / board / manager` | Adapter health, human-inbox, board attach, manager via herdr |
+Make the smallest integration corrections required for the manager/team/PO loop. Prove it using a tiny non-game readiness story in an isolated Git project.
 
-Game-relevant skills the pipeline can invoke: the ForgeStack suite ships `skills/forgestack/`
-(workflow/PM suite: `phase-designer`, `intake`, `status`, `artifact-handoff`, `manager`,
-`knowledge-sync`, `workflow-policy`, ...) — it does **not** ship game skills. The game-gen
-prompts reference play-development skill packs (`router`, `prototype-fast`, `phaser-core`,
-`phaser-arcade-physics`, `game-feel`, `game-design-document`, `game-jam`) that must already
-exist in the executing agent's skill directories (`~/.claude/skills/`, `~/.agents/skills/`).
-This is a **documented precondition**, not vendored content. If any pack is missing, the
-running agent silently gets no skill — so the plan task for the golden-path build must
-verify each referenced pack resolves before the game is committed.
+**G1:** A recorded real run demonstrates PO input → manager refinement → approved plan → worker implementation → independent review → PO acceptance, including one clarification and one failure/recovery exercise. Real task transitions and worker sessions must be inspectable through supported interfaces. Unit checks alone do not satisfy G1.
 
-## 3. Confirmed decisions
+If AGTX lacks required supported operations, record the exact limitation and stop before Phase 2. Do not substitute fabricated transitions, direct database edits, or a one-prompt execution script. Replacing the workflow engine requires a new scope decision.
 
-| Decision | Choice |
-|---|---|
-| Audience | Portfolio across Engineering / AI / PM / Game Dev + external pitch + talk/video/blog artifact |
-| Game | Web (Phaser/JS), zero-install browser-runnable, freshly generated each run |
-| Live vs staged | Hybrid — committed golden path as fallback; live guided run at pitch |
-| Portfolio | Full artifact bundle: demo repo + `docs/DEMO.md` case study + captured terminal replay + gameplay clip + tech-decision log + portfolio summary page |
-| Demo length | 5-7 min (short); natural off-ramp at the plan→next-phase card move |
-| Default agent | **Codex** for `phases design` + running phase |
-| AGTX runtime | Bounded probe first; outcome picks (A) native AGTX loop vs (B) AGTX-independent agent-command orchestration; golden path committed regardless |
-| Update story | Second card through the SAME configured phases (research→planning, stop at transition). No re-run of `phases` mid-demo. |
+### Phase 2 — Use ForgeStack + Codex to produce the prototype
 
-## 4. Narrative arc (approved by user)
+Use the verified integration in a separate demo Git repository. The PO gives a product brief; the manager refines and coordinates it; workers produce a playable game with saved delivery evidence.
 
-> "we build one game prototype, show the game while demo tell them this was created by
-> forgestack, then proceed to use forgestack to create game update story as forgestack demo.
-> after that i can either end demo there when card move from plan to next phase or can run
-> to the end and show updated prototype."
+**G2:** A fresh checkout runs the accepted game from a local static server. The repository contains traceable backlog, PO decisions, handoffs, verification, independent review, and acceptance. A recorded walkthrough and case study explain the engineering, AI, and management evidence.
 
-1. **Pre-built golden path** — build one complete game prototype via ForgeStack (committed).
-2. **Open the demo** — show the finished game; *"this was created by ForgeStack"*.
-3. **Live run** — use ForgeStack to create a **game update story** (task 2) driven through
-   the ForgeStack-configured phase pipeline.
-4. **Flexible ending** — stop at the plan→next-phase card move (workflow + PM state)
-   **or** run to the end and show the updated prototype.
-5. Golden-path replay remains the committed fallback for the live portion.
+**G2 is sufficient for a complete portfolio demo. No live update is required.**
 
-Properties: pre-built game satisfies "freshly generated"; live segment is a short,
-fast-finishing update (not a greenfield build); the PM angle (watching a card move
-phases) is the natural off-ramp; determinism honored because the update is a fresh run
-against a real repo.
+### Phase 3 — Optional live update
 
-## 5. Architecture & components (Section 1 — approved)
+Show the accepted prototype and ask the same team to deliver a small update. Stop after the approved plan transitions into actual implementation, or continue through review and PO acceptance and show the updated game.
 
-### Golden-path repo (the demo project)
+**G3, only if selected:** Rehearse from the accepted baseline, save a verified updated revision and a recording of its real workflow, and rehearse fallback playback. A failed live run uses this recording, explicitly labeled as a prior run.
 
-A ForgeStack-enabled project with a committed, playable Phaser game:
+## 3. Roles and authority
 
-```
-<demo-repo>/
-  .forgestack.toml            # phase config: research/planning/running/review, codex
-  .agtx/plugins/forgestack/plugin.toml   # via `forgestack phases apply`
-  .forgestack-managed.json    # manifest story (setup/apply writes are tracked)
-  game-source/                # committed Phaser game
-  vendor/phaser.min.js        # Phaser BUNDLED LOCALLY — no CDN, game runs fully offline
-  run-game.html / run script  # static server → browser
-  docs/stories/update-score-over.md   # the fixed update story (§6.1)
-  docs/DEMO.md                # case study (PM + engineering narration)
-```
+| Role | Responsibility | Boundary |
+| --- | --- | --- |
+| Human PO | Product goal, priority, scope choices, final acceptance | Need not operate each worker or advance every phase |
+| Persistent AI manager/facilitator | Refine intake, prepare tasks, coordinate workers, summarize progress, surface blockers, route PO answers, record decisions | Does not implement production code or keep a competing task database |
+| Research/planning worker | Investigate; produce plan, acceptance criteria, dependencies | Does not invent unresolved product decisions |
+| Implementation worker | Implement approved plan, test, produce handoff | One writer per shared working tree |
+| Independent reviewer | Review spec, diff, tests, evidence; return findings | Separate session from implementation author; no feature implementation |
+| ForgeStack + AGTX | Configure integration and operate real task/session lifecycle | AGTX remains authoritative for task state |
 
-**Live demo surface** (at pitch): `forgestack phases` + card/status view + browser game.
-Everything else (setup, apply, manifest) is shown in the golden path / replay.
+Codex is the default provider. Roles may use the same provider/model, but the manager remains separate from delivery workers and review uses an independent session. Parallel workers are unnecessary.
 
-**Offline / zero-install meaning (finding 5):** the *audience* installs nothing and the
-game runs from a static file with no network — Phaser is vendored locally.
-The *operator* needs the documented skill packs present and the configured agent CLI;
-ForgeStack itself is already installed. If a demo machine has no agent CLI, the replay
-fallback (§7) is used.
+Spawning follows applicable user/AGENTS.md approval requirements. Product approval, worker-spawn permission, and final acceptance are separate events; none may be silently bypassed.
 
-#### 5.1 Canonical phase representation (finding 4)
+## 4. Current foundations and required corrections
 
-The **phase list (`[[workflow.phases]]`) is the single source of truth** for what renders.
-`workflow_research` is a compat flag, not a second source of truth:
+Source inspection establishes these starting points, not installed-tool compatibility:
 
-- Renderer: a phase with `key == "research"` renders only when `workflow_research` is true
-  (this is a small in-scope hardening; today it renders unconditionally).
-- Validation: a `research` phase present while `workflow_research=false` is a warning.
-- The golden-path repo keeps `workflow_research=true` and a `research` phase, so the demo
-  exercise the canonical (research-on) path.
+- Manager, intake, artifact-handoff, human-inbox, and workflow-policy skills already describe the desired coordination behavior.
+- The phase model supports per-phase providers, skills, prompts, and artifact paths.
+- The manager command currently launches bare Herdr without explicitly initializing the configured manager agent and instructions.
+- Phase application writes the plugin but prints AGTX routing for manual installation. Effective routing and plugin activation need verification.
+- Planning `team` is prompt-level role simulation with optional delegation, not guaranteed worker provisioning.
+- Inbox queries only `needs_review` and can report a failed query as a clean inbox. It does not implement the complete answer-routing loop.
+- Status reports installed tools/versions rather than task progress.
+- Research-flag rendering and TOML escaping/parse validation need the hardening identified in the earlier design.
 
-### Deliverables
+Phase 1 must correct manager initialization and truthful failure reporting, and verify task operations, routing, handoffs, and human decisions. Prefer supported upstream capabilities and existing skills. Documented manual configuration during setup is acceptable; manually orchestrating every delivery step is not the target experience.
 
-- Demo repo (shareable link)
-- `docs/DEMO.md` case study
-- Captured terminal replay (script/asciinema) + gameplay clip
-- Tech-decision log (why Phaser, why hybrid live/golden-path, why this phase model)
-- Portfolio summary page
+Herdr may remain a workspace UI. A verified direct interactive Codex manager session is acceptable if it loads the same manager instructions and coordinates the same AGTX workers. Opening a workspace alone does not count as starting a manager.
 
-## 6. Data flow (Section 2 — approved)
+## 5. Runtime and evidence contract
 
-- **ForgeStack `phases` configure the MODEL** (phase shape: which phases, prompts, agents,
-  skills, team) — **not individual tasks**. Tasks/cards are AGTX domain.
-- One scaffolded phase model is baked into the golden-path repo.
-- The update story is a **second card** flowing through the **same configured phases**
-  (research → planning, stopping at the transition). The live demo shows the
-  ForgeStack-configured phase model driving the update card.
-- Live demo does **not** re-run `phases` mid-demo.
-- No `--append` feature exists; the demo explicitly does not need it.
+Record installed versions and exact supported interfaces for:
 
-### 6.1 The fixed update story (finding 3 — concrete, measurable)
+1. Create/read/update tasks and approved content.
+2. Start phases and inspect actual state, worker identity, completion, and failure.
+3. Activate the ForgeStack plugin and effective per-phase provider routing.
+4. Hand approved artifacts to implementation and review.
+5. Surface questions/blockers and deliver PO answers to the correct worker.
+6. Start independent review and return important findings to implementation.
+7. Record PO acceptance without equating worker exit code zero with acceptance.
 
-The update story is one fixed task, committed in the golden-path repo as `docs/stories/update-score-over.md`,
-so rehearsal, the replay fallback, and the live run all target the same change:
+Use installed help/source and bounded probes; do not guess CLI syntax. If a supported UI is required, record that boundary and prove the manager can operate the required workflow with available supported tools. Do not invent an unattended interface.
 
-- **Card title:** "Add score + game-over overlay"
-- **Card body (task):**
-  > The current game has no score. Add: (1) a score counter that increases as the player
-  > survives/dodges (any consistent rule the playable baseline makes obvious), displayed
-  > top-left during play; (2) on player death, freeze the game and show a "Game Over" overlay
-  > with the final score and a **Restart** button that reloads a fresh run. No audio, no
-  > persistence, no leaderboard.
-- **Baseline (committed, must be true before the story starts):** the golden-path game
-  plays per its README; there is no score counter and no game-over overlay.
-- **Observable acceptance criteria (browser-visible, order-independent):**
-  1. During play a numeric score appears top-left and increases.
-  2. On player death the game freezes and an overlay reads "Game Over" with the final score.
-  3. Clicking **Restart** starts a fresh run (state reset).
-- **Demo stopping gate:** the card has moved out of `planning` (research→planning shown
-  live); from there the demo ends, or runs to the end and the three acceptance criteria
-  are shown in the browser.
-- **Determinism:** the story is the same every run; only the agent's prose/diff varies.
-  A failing or divergent acceptance criterion is handled by the contingencies in §7.<br>
-- **Skill packs referenced by the running phase (all verified present in user skill dirs, found at spec review):**
-  `router`, `prototype-fast`, `phaser-core`, `phaser-arcade-physics`, `game-feel`,
-  `game-design-document`, `game-jam`.
+Persist concise artifacts in Git-backed project files. Evidence identifies task, role/session, artifact or revision, observed result, and PO decision. Keep credentials and unnecessary raw transcripts out of committed evidence.
 
-## 7. Error handling & contingencies (Section 3 — approved, defaults locked)
+Prompt wording alone does not enforce gates: G1 must show that implementation waits for approval, unresolved product questions are escalated, and acceptance comes from the PO.
 
-### 7.1 The two concrete live drivers (finding 1)
+## 6. Readiness story
 
-The live update story must move a card through phases. ForgeStack v0.2 has **no command
-that creates/advances a card** — so the live driver is exactly one of these two,
-selected by the bounded AGTX probe (implementation task, runs first):
+Use an isolated disposable project:
 
-- **Path A — native AGTX driver.** The probe must record the *exact* commands that create
-  a task, move it research→planning→review, and list cards/status, e.g.
-  `agtx task create "..." --status planning`, `agtx task move <id> --status running`,
-  `agtx status`. Only commands **recorded working** in the probe may be used; any AGTX
-  command that hangs/errors (today: `--help` → `Device not configured`, PTY hang) is
-  excluded from the live path. If the probe records fewer than three reliable commands,
-  the verdict is **B**, not an improvised hybrid.
-- **Path B — committed orchestration script.** The demo repo ships
-  `scripts/drive_story.py` which runs the **running-phase prompt** from the applied
-  `plugin.toml` against the configured agent CLI (`codex exec`), waits for completion,
-  then prints a card-move line (`planning → running → review`). This is the SAME
-  mechanism `forgestack phases design` already uses (`_AGENT_CMDS` subprocess); the
-  script is demo-domain glue in the demo repo, not a new ForgeStack feature. It reads
-  the prompt from the committed `plugin.toml`, so it exercises the ForgeStack-configured
-  phase model.
+> Create `greeting.py` exposing `greet(name: str) -> str`. It should return a friendly greeting. Clarify how a blank name should behave before implementing.
 
-Both paths drive the **same** update story (§6.1). The one-line branches depend only on
-the probe verdict.
+The manager asks the PO to choose blank-name behavior and records the actual answer. The worker implements `greet("Ada") == "Hello, Ada!"` and the selected blank-name behavior with tests. A separate reviewer checks the result; the PO accepts or rejects it.
 
-| Failure | Contingency |
-|---|---|
-| AGTX runtime not reliable | Path B (committed `scripts/drive_story.py`) is the live driver; no AGTX in the live path. |
-| Agent CLI fails/hangs/empty output | Abort the story; show the prepared golden-path update applied instead ("same story, pre-run"). One bounded timeout on agent calls (120s default) — the script enforces a hard timeout and returns a clean "timeout" message. |
-| No network / tools missing | `phases apply` from committed golden-path config — zero network. The running agent has no network need for this story (Phaser vendored, no CDN). |
-| Card-move view unavailable (AGTX down, Path A rejected) | **Recorded replay fallback (finding 2):** the card-move moment is shown via the pre-recorded phase-replay clip (local file) of the *exact* update story moving research→planning→running. The golden path still ends with the updated game open in the browser. This is an explicit, rehearsed fallback, not improvisation. |
-| Screen/encoding hiccups | Replay the captured golden-path video for any segment; keep the pre-recorded run as a **local file**, not a stream. |
-| "What happens next?" from audience | Decided before the demo: either continue running or cut. Do not improvise. |
-| Rehearsal gate | Full dry run (captured) + a second as-audience pass on the final edited video, same demo conditions. Any issue surviving rehearsal triggers a fallback decision. |
+Exercise one controlled blocked-worker or failed-query condition using an isolated fixture or supported runtime control. Do not invalidate real credentials. Show visible failure and recovery. If review finds important defects, demonstrate correction and re-review.
 
-### 7.2 Fallback semantics (finding 2, sealed)
+## 7. Prototype scope
 
-The golden path is *not* the fallback for the PM workflow — the **recorded phase-replay
-clip** is. The golden path guarantees "a playable game exists"; the replay guarantees "the
-card-move (PM) story is still shown even with zero live orchestration." Both are committed
-artifacts of the demo repo (see §8).
+**Project:** Separate sibling Git repository, proposed path `<sibling-demo-project>`. Check whether it exists and preserve its contents. Respect filesystem permissions at execution time.
 
-## 8. Testing / rehearsal / verification (Section 4)
+**Brief:** A small Phaser 3 game: dodge falling objects with left/right arrow keys, rendered at 960×540 using simple original geometric visuals. Display controls. Collision stops play; a documented restart key begins a fresh run.
 
-- **Golden-path build gate:** game must be committed and playable from a fresh clone
-  with no setup beyond a static server, BEFORE demo prep. "A playable game exists at every moment."
-- **Probe verdict (bounded implementation task):** single deliverable is a recorded
-  verdict (A) or (B). Runs first in the plan; everything downstream branches off that one line.
-- **Rehearsal:** (1) full dry run with the real agent, timeskips where the video will cut,
-  every contingency exercised; capture clean replay + gameplay clip.
-  (2) as-audience pass: final edited video, timed 5-7 min, on the demo machine / same
-  projector-zoom conditions.
-- **Verification checklist (demo repo):**
-  - Fresh clone → `forgestack setup --scope project` → game runs; idempotent re-run
-    (manifest preserves edits).
-  - `forgestack phases apply` produces `plugin.toml`; `status`/`doctor` clean.
-  - Update story's committed end-state (game change visible in browser) exists
-    independently of live codex.
-  - Every command in the transcript is pre-typed/aliased; no mid-demo typing.
-- **Out of test scope:** AGTX daemon multitasking, multi-agent parallelism, other engines
-  (kept to the probe).
+**Baseline acceptance:**
 
-### 8.1 In-scope hardening (findings 4 & 6, small code changes in ForgeStack itself)
+- Starts from `run-game.html` served by a local static server.
+- Arrow keys move the player; falling hazards produce an observable loss condition.
+- Collision stops play; restart resets game state.
+- No score counter, final-score display, or Game Over overlay.
+- Phaser is bundled locally with license/provenance; gameplay needs no network.
+- No audio, persistence, leaderboard, multiplayer, or build tooling.
 
-These are prerequisites for a reliable demo and correct v0.2 behavior, not new features:
+Manager and PO may refine the backlog within this scope. Production implementation must come from the worker workflow. Keep the prototype small without an artificial source-line limit. Verify selected game skills against the chosen Phaser version.
 
-- **Finding 4 — research flag respected.** `render_plugin_toml` skips a `research` phase
-  when `workflow_research` is false; `validate` warns on the mismatch. Add/extend unit
-  tests in `tests/unit/test_render.py` / `test_validate.py`.
-- **Finding 6 — generated TOML must always parse.** Agent-authored prompts are
-  interpolated into `"""..."""` TOML literals (renderer.py:24,26 and config.py render).
-  Add serializer escaping for `"""` in prompt text, and a `tomllib.loads()` **parse gate**
-  before `phases apply` writes `plugin.toml` (and before `render_toml` is written by
-  `agents`/`scaffold`). A prompt containing `"""` must not produce invalid TOML; if the
-  gate fails the write is refused with a clear message. Unit tests in `test_render.py`
-  and `test_phases_cmd.py`.
-- **Goal:** the golden-path `plugin.toml` is proven parseable by `tomllib.loads()` in the
-  verification checklist.
+“Offline” applies to gameplay and local recordings. Live Codex execution may require network/authentication. Audience playback requires no agent installation; the operator needs the documented toolchain.
 
-## 9. Key risk review
+## 8. Optional update story
 
-- `agtx --help` headless → `Error: Device not configured (os error 6)`; under PTY it hangs.
-  AGTX runtime is the only component that might not cooperate live — mitigated by the
-  probe → (A)/(B) decision + committed golden path.
-- ForgeStack `phases design` invokes the agent CLI directly (subprocess, `_AGENT_CMDS`),
-  independent of AGTX — so `phases scaffold → design → apply` can be demonstrated with
-  AGTX offline.
+**Title:** Add score + game-over overlay.
 
-## 10. Implementation plan shape (for writing-plans)
+**PO request:** “I want players to see how well they performed and restart easily after losing.”
 
-1. **In-scope hardening (findings 4 & 6):** research-flag respected in renderer + validation
-   warning; TOML escaping + parse gate before writes. Tests. (This unblocks everything
-   downstream.)
-2. **AGTX probe** (bounded) → recorded verdict (A) exact working AGTX commands, or (B)
-   committed `scripts/drive_story.py` orchestration script (§7.1).
-3. **Golden-path build** → ForgeStack-enabled repo + committed Phaser game (Phaser vendored
-   locally) via the phase pipeline; verify fresh-clone bootstrap + `tomllib` parse + skill
-   packs resolved.
-4. **Commit the update story end-state + recorded phase-replay clip** of the same story
-   (§6.1, §7.2) so the PM card-move is always showable.
-5. **Artifact production** → captured replay + gameplay clip + `docs/DEMO.md` + decision log + portfolio page.
-6. **Rehearsal passes** (dry run + as-audience) → final video, timed; every contingency in
-   §7 exercised once.
+Manager proposes a score increasing during survival, displayed top-left; collision freezes play and shows a “Game Over” overlay with final score and Restart button. PO confirms scoring rule and scope before implementation.
+
+**Acceptance:** Score visibly increases; collision freezes play and shows final score; Restart resets score and state. No audio, persistence, or leaderboard.
+
+Start each rehearsal from the accepted baseline, not the updated revision. Research may be skipped with a recorded rationale. Use the same configured workflow; do not reconfigure phases midway through delivery.
+
+## 9. Portfolio artifacts and presentation
+
+Required after Phase 2:
+
+- ForgeStack readiness report: versions, actual commands/results, failures, fixes, G1 evidence.
+- Demo repository and immutable accepted baseline revision with README/static-server instructions.
+- `docs/product-brief.md`, `docs/backlog.md`, `docs/decisions.md`, phase artifacts under `docs/ai/`.
+- `docs/verification.md`: observed gameplay checks, independent review, actual PO acceptance.
+- `docs/DEMO.md`, `docs/decision-log.md`, `docs/portfolio.md`: evidence for all three skills and accurate upstream attribution.
+- Local recording of the real team workflow and short gameplay clip, committed or linked through a durable artifact location, with tested playback instructions.
+
+Phase 3 optionally adds an accepted updated revision and recording of that same update story. Baseline stays independently runnable.
+
+Target 5–7 minutes: gameplay → product goal/team roles → meaningful PO decision → handoff/review → accepted result. Disclose edits and time cuts. Optional live delivery replaces part of this walkthrough; it is not a preparation prerequisite.
+
+## 10. Verification and boundaries
+
+- Regression tests cover configuration serialization, manager launch, upstream failures, and new integration behavior.
+- Real G1 execution proves coordination; mocks do not substitute for it.
+- Fresh-checkout gameplay and evidence review establish G2.
+- Optional G3 includes timed rehearsal and recorded fallback playback.
+- Record actual outcomes; never pre-fill successful checks or PO acceptance.
+- No new workflow engine, supervisor, generalized scheduler, or game platform is in scope.
+- This documentation revision does not authorize implementation, external publication, worker spawning, or committing user changes.

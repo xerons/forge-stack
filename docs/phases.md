@@ -49,3 +49,35 @@ configured, the current default model (research + planning + running + review) i
 When enabled, the planning agent runs one explicit role pass per team member and produces a
 requirements × roles coverage matrix that flags requirements uncovered by the team — the
 anti-missing/overlook mechanism. It costs extra tokens, so it is never enabled implicitly.
+
+
+## Proportionate work within phases
+
+A tiny task can keep its plan and acceptance criteria in the card. Use separate
+specifications, research, and methodology packs when uncertainty or project requirements
+justify them. This changes the amount of work inside the configured lanes, not AGTX's
+lifecycle or approval gates. `QA/acceptance` is review activity, not an additional phase key.
+
+Planning teams delegate only when the active user/harness policy permits it. A roster
+alone does not authorize subagents. If role passes run in one agent, label that fact;
+they are not independent review. Resolve BLOCKING and IMPORTANT findings before completion.
+
+The default prompts are maintained in `src/forgestack/workflow/model.py`. After editing
+those defaults, regenerate the shipped plugin from the repository root:
+
+```sh
+.venv/bin/python - <<'PYTHON'
+from pathlib import Path
+from forgestack.workflow.model import PhaseModel
+from forgestack.workflow.renderer import render_plugin_toml
+Path("agtx/plugins/forgestack/plugin.toml").write_text(
+    render_plugin_toml(PhaseModel.default())
+)
+PYTHON
+```
+
+A regression test compares the parsed shipped and generated plugin. Custom phase
+prompts still take precedence. Existing installed assets are updated only through the
+normal managed-write flow; locally edited assets remain protected.
+
+For model settings and the instruction audit, see [agent guidance audit](agent-guidance-audit.md).

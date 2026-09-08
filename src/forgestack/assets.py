@@ -1,11 +1,18 @@
-"""Locates ForgeStack-owned installable assets in the source checkout."""
+"""Locate ForgeStack-owned assets in a checkout or an installed package."""
 
 from pathlib import Path
 
 
-# ponytail: resolves the repo checkout; wheel installs need importlib.resources/package-data instead.
 def asset_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    """Return the source checkout root or bundled package-data root."""
+    checkout = Path(__file__).resolve().parents[2]
+    if (checkout / "skills" / "forgestack").is_dir():
+        return checkout
+
+    bundled = Path(__file__).resolve().parent / "_assets"
+    if (bundled / "skills" / "forgestack").is_dir():
+        return bundled
+    raise FileNotFoundError("ForgeStack skill assets are not installed")
 
 
 def skill_suite_files() -> list[Path]:

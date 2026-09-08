@@ -42,7 +42,8 @@ def _write_scope(
     data = {"workflow": {"engine": "agtx", "research": research, "cyclic": cyclic, "phases": phases}}
     merged = _deep_merge(existing, data)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_toml(Config.from_dict(merged)))
+    rendered = render_toml(Config.from_dict(merged))
+    path.write_text(rendered)
 
 
 @phases_app.command("scaffold")
@@ -129,8 +130,20 @@ def design(scope: str = typer.Option("project", "--scope", help="project or glob
             timeout=120,
             check=False,
         )
-    except (FileNotFoundError, TimeoutError) as exc:
-        console.print(f"[yellow]Agent run failed ({exc}). Defaults will be applied.[/yellow]")
+    except (FileNotFoundError, subprocess.TimeoutExpired, TimeoutError) as exc:
+        console.print(
+            f"Agent run failed ({exc}). Defaults will be applied.",
+            style="yellow",
+            markup=False,
+        )
+        return
+    if result.returncode != 0:
+        detail = result.stderr.strip() or f"exit status {result.returncode}"
+        console.print(
+            f"Agent run failed ({detail}). Defaults will be applied.",
+            style="yellow",
+            markup=False,
+        )
         return
     merged = _merge_design_toml(model, result.stdout)
     if merged is None:
@@ -153,7 +166,10 @@ def apply(scope: str = typer.Option("project", "--scope", help="project or globa
     model.phases = cfg.phases
     if not model.phases:
         model = PhaseModel.default()
-    issues = [r for r in validate(model, registry()) if not r.ok]
+    checks = validate(model, registry())
+    for warning in (r for r in checks if r.ok and r.detail.startswith("warning:")):
+        console.print(f"[yellow]{warning.name}: {warning.detail}[/yellow]")
+    issues = [r for r in checks if not r.ok]
     if issues:
         for i in issues:
             console.print(f"[red]{i.name}: {i.detail}[/red]")
@@ -179,7 +195,14 @@ def _design_prompt(model: PhaseModel) -> str:
         (
             "You are designing the ForgeStack workflow phase model. For EACH phase below, "
             "write (a) a one-paragraph 'purpose' and (b) a complete agent 'prompt' that starts "
-            "with 'Task:\\n{task}' and guides that phase. Return ONLY a TOML fenced block:"
+            "with 'Task:\\n{task}' for agent phases and guides that phase. Preserve preresearch "
+            "command semantics. Keep the supplied keys and scope fixed. Return ONLY a TOML fenced block:"
+        ),
+        (
+            "Prompts must preserve user instructions, configured approval gates, and phase scope. "
+            "Resolve routine choices from evidence, continue authorized work, and ask only for "
+            "material missing decisions. Scale artifacts and verification to task risk; report "
+            "actual results. Use relevant available skills without making optional tooling mandatory."
         ),
         "```toml",
         "[[workflow.phases]]",
@@ -193,9 +216,14 @@ def _design_prompt(model: PhaseModel) -> str:
         lines.append(f"## phase key={p.key}" + (f" agent={p.agent}" if p.agent else ""))
         if p.team:
             lines.append("team (sprint-planning): " + ", ".join(p.team))
-            lines.append("include role passes and a requirements × roles coverage matrix.")
+            lines.append(
+                "Use the team as design context only. The renderer appends role passes, "
+                "a requirements × roles coverage matrix, and delegation approval boundaries; "
+                "do not duplicate that block or execute the team while designing."
+            )
         if p.skills:
             lines.append("available skills: " + ", ".join(p.skills))
+            lines.append("The renderer appends skill-pack references; do not duplicate that list.")
         lines.append(f"current purpose: {p.purpose or '(none)'}")
     return "\n".join(lines)
 
@@ -275,6 +303,13 @@ def _plugin_path(scope: str, root: Path | None) -> Path:
 
 def _write_with_diff(console: Console, path: Path, new: str, manifest_root: Path) -> None:
     import difflib
+    import tomllib
+
+    try:
+        tomllib.loads(new)
+    except tomllib.TOMLDecodeError as exc:
+        console.print(f"[red]Refusing malformed generated plugin.toml: {exc}[/red]")
+        return
 
     old = path.read_text() if path.exists() else ""
     if old == new:

@@ -59,8 +59,24 @@ Then, from any Git repository:
 forgestack setup     # detect + (with approval) install tools, install ForgeStack assets, write global config
 forgestack setup --scope project   # install ForgeStack assets into this project
 forgestack init      # validate + prepare this project
-forgestack manager   # launch the Manager
+forgestack manager   # launch a persistent Manager session (Codex by default)
 ```
+
+`setup` asks before installing external tools and installs ForgeStack's skills and AGTX
+plugin with managed-file protection. Run it from the Git project where you will work.
+Then run `init`, configure phase routing with `agents` if needed, and start the Manager.
+The Manager coordinates requirements and AGTX work; implementation and review happen in
+separate worker sessions. The configured `[manager] agent` defaults to `codex`; supported
+interactive launchers are Codex, Gemini, OpenCode, and Herdr. A project can override the
+global configuration in `.forgestack.toml`.
+
+For a first workflow, use `forgestack phases scaffold --scope project`, optionally run
+`forgestack phases design`, then run `forgestack phases apply`. Review the diff before
+confirming the generated project `.agtx/plugins/forgestack/plugin.toml`. Start AGTX with
+the configured project plugin, create or import a task, and let the Manager route it
+through Planning, Running, and Review. Use `forgestack status` for tool detection and
+`forgestack inbox` for supported pending-decision queries; failed queries are reported as
+failures rather than being shown as a clean inbox.
 
 ## Architecture
 
@@ -109,7 +125,8 @@ See [`docs/architecture.md`](docs/architecture.md) for the full design.
 Global: `~/.config/forgestack/config.toml`
 Project: `.forgestack.toml`
 
-Project values override global values in a deep merge. See [product spec](.draft/forgestack-product-spec.md) for the full schema.
+Project values override global values in a deep merge. See [architecture](docs/architecture.md)
+and the workflow documentation for the supported configuration surface.
 
 ## Safety model
 
@@ -129,7 +146,8 @@ python -m venv .venv
 .venv/bin/ruff check src/
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/](docs/).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [repository agent guidance](AGENTS.md), and
+the [GPT-6 Astra guidance audit](docs/agent-guidance-audit.md).
 
 ## License
 

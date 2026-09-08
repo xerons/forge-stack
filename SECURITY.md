@@ -2,7 +2,10 @@
 
 ## Reporting a vulnerability
 
-Please do **not** open a public issue for security vulnerabilities. Report privately by email to the maintainers (address TBD) or via GitHub's private vulnerability reporting once the repository is public.
+Please do **not** open a public issue for security vulnerabilities. Once enabled,
+use GitHub's private vulnerability reporting from the repository **Security** tab.
+If that channel is unavailable, contact the maintainers through the repository
+owner's GitHub profile and do not include secrets in the initial report.
 
 Include:
 

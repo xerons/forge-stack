@@ -30,6 +30,18 @@ def validate(model: PhaseModel, registry: Iterable) -> list[CheckResult]:
         if required not in keys:
             results.append(CheckResult(required, False, "required phase missing"))
 
+    has_research = "research" in keys
+    if model.research != has_research:
+        configured = "enabled" if model.research else "disabled"
+        present = "present" if has_research else "absent"
+        results.append(
+            CheckResult(
+                "research configuration",
+                True,
+                f"warning: research is {configured} but the phase is {present}; rendering follows the flag",
+            )
+        )
+
     if not any("{task}" in (p.prompt or "") for p in model.phases):
         results.append(CheckResult("reachable", False, "no prompt contains {task}"))
 

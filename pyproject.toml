@@ -40,7 +40,7 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-forgestack = ["py.typed"]
+forgestack = ["py.typed", "_assets/**/*.md", "_assets/**/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

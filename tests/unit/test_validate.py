@@ -48,3 +48,11 @@ def test_team_off_planning_is_warning_not_error():
     m = _model(PhaseDef(key="running", team=["artist"]), PhaseDef(key="planning"), PhaseDef(key="review"))
     results = validate(m, [])
     assert any(r.name == "team:running" and r.ok for r in results)
+
+
+def test_research_flag_mismatch_is_warning():
+    phases = [PhaseDef(key="planning"), PhaseDef(key="running"), PhaseDef(key="review")]
+    results = validate(_model(*phases, research=True), [])
+    warning = next(r for r in results if r.name == "research configuration")
+    assert warning.ok
+    assert "warning:" in warning.detail

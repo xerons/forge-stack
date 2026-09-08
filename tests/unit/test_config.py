@@ -36,3 +36,24 @@ def test_render_toml_roundtrip() -> None:
     rendered = render_toml(cfg)
     assert "profile = \"test\"" in rendered
     assert "running = \"opencode\"" in rendered
+
+
+def test_render_toml_roundtrips_special_phase_text() -> None:
+    import tomllib
+
+    text = 'Task:\n{task}\nUse """quoted""" text and C:\\temp.\tEnd.'
+    cfg = Config.from_dict(
+        {
+            "workflow": {
+                "phases": [
+                    {"key": "planning", "purpose": text, "prompt": text},
+                    {"key": "running", "prompt": "Task:\n{task}"},
+                    {"key": "review", "prompt": "Task:\n{task}"},
+                ]
+            }
+        }
+    )
+    parsed = tomllib.loads(render_toml(cfg))
+    phase = parsed["workflow"]["phases"][0]
+    assert phase["purpose"] == text
+    assert phase["prompt"] == text

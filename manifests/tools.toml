@@ -47,4 +47,4 @@ upstream_hint = "brew install opencode"
 [agents.gemini]
 upstream_hint = "npm install -g @google/gemini-cli"
 [agents.agy]
-upstream_hint = "curl -fsSL https://antigravity.google/install.sh | bash"  # official doc at time of writing
+upstream_hint = "Install via the official Antigravity documentation"

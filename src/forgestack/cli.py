@@ -45,7 +45,7 @@ def agents() -> None:
 
 @app.command()
 def manager() -> None:
-    manager_cmd.cli()
+    raise SystemExit(manager_cmd.cli())
 
 
 @app.command()

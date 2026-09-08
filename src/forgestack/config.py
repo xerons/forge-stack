@@ -8,6 +8,7 @@ internal emitter for the owned keys ForgeStack manages.
 
 from __future__ import annotations
 
+import json
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -90,7 +91,7 @@ def render_toml(config: Config) -> str:
         if p.label:
             lines.append(_fmt_kv("label", p.label))
         if p.purpose:
-            lines.append(f'purpose = """{p.purpose}"""')
+            lines.append(_fmt_kv("purpose", p.purpose))
         if p.agent:
             lines.append(_fmt_kv("agent", p.agent))
         if p.skills:
@@ -100,7 +101,7 @@ def render_toml(config: Config) -> str:
         if p.artifact:
             lines.append(_fmt_kv("artifact", p.artifact))
         if p.prompt:
-            lines.append(f'prompt = """{p.prompt}"""')
+            lines.append(_fmt_kv("prompt", p.prompt))
         lines.append("")
     if config.agents:
         lines.append("[agents]")
@@ -114,16 +115,28 @@ def render_toml(config: Config) -> str:
         lines.append("")
     if config.runtime_workspace:
         lines += ["[runtime]", f'workspace = "{config.runtime_workspace}"', ""]
-    return "\n".join(lines).rstrip() + "\n"
+    rendered = "\n".join(lines).rstrip() + "\n"
+    _validate_toml(rendered)
+    return rendered
 
 
 def _fmt_kv(key: str, val) -> str:
     if isinstance(val, bool):
         return f"{key} = {'true' if val else 'false'}"
     if isinstance(val, list):
-        items = ", ".join(f'"{v}"' for v in val)
+        items = ", ".join(_toml_string(str(v)) for v in val)
         return f"{key} = [{items}]"
-    return f'{key} = "{val}"'
+    return f"{key} = {_toml_string(str(val))}"
+
+
+def _toml_string(value: str) -> str:
+    """Encode a TOML basic string without losing escapes or control characters."""
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _validate_toml(text: str) -> None:
+    """Fail before a caller writes malformed generated configuration."""
+    tomllib.loads(text)
 
 
 def _parse_phases(raw: object) -> list[PhaseDef]:

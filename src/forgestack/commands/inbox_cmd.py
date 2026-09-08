@@ -31,7 +31,10 @@ def cli() -> None:
             timeout=5,
             check=False,
         )
-        if result.returncode == 0 and result.stdout.strip():
+        if result.returncode != 0:
+            detail = result.stderr.strip() or f"exit status {result.returncode}"
+            console.print(f"AGTX inbox query failed: {detail}", style="red", markup=False)
+        elif result.stdout.strip():
             console.print("[bold]Needs you:[/bold]")
             console.print(result.stdout.strip())
         else:

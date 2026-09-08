@@ -22,6 +22,53 @@ def test_agent_command_map():
     assert _agent_command("unknown-agent") is None
 
 
+def test_phase_design_timeout_is_reported_without_writing(tmp_path, monkeypatch, capsys):
+    import subprocess
+
+    from forgestack import paths
+    from forgestack.commands.phases_cmd import design
+    from forgestack.config import Config
+    from forgestack.workflow.model import PhaseModel
+
+    monkeypatch.setattr(paths, "git_root", lambda *a, **k: tmp_path)
+    monkeypatch.setattr(
+        "forgestack.config.load_config",
+        lambda _: Config.from_dict({"workflow": {"phases": [{"key": p.key, "agent": "codex"} for p in PhaseModel.default().phases]}}),
+    )
+    monkeypatch.setattr(
+        "subprocess.run",
+        lambda *a, **k: (_ for _ in ()).throw(subprocess.TimeoutExpired("codex", 120)),
+    )
+
+    design(scope="project")
+    assert "Agent run failed" in capsys.readouterr().out
+    assert not (tmp_path / ".forgestack.toml").exists()
+
+
+def test_phase_design_nonzero_is_rejected(tmp_path, monkeypatch, capsys):
+    from types import SimpleNamespace
+
+    from forgestack import paths
+    from forgestack.commands.phases_cmd import design
+    from forgestack.config import Config
+    from forgestack.workflow.model import PhaseModel
+
+    monkeypatch.setattr(paths, "git_root", lambda *a, **k: tmp_path)
+    monkeypatch.setattr(
+        "forgestack.config.load_config",
+        lambda _: Config.from_dict({"workflow": {"phases": [{"key": p.key, "agent": "codex"} for p in PhaseModel.default().phases]}}),
+    )
+    monkeypatch.setattr(
+        "subprocess.run",
+        lambda *a, **k: SimpleNamespace(returncode=2, stdout="", stderr="agent failed"),
+    )
+
+    design(scope="project")
+    output = capsys.readouterr().out
+    assert "agent failed" in output
+    assert not (tmp_path / ".forgestack.toml").exists()
+
+
 def test_scaffold_writes_project_config(tmp_path, monkeypatch):
     import tomllib
 

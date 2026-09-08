@@ -2,14 +2,43 @@ from forgestack.workflow.model import PhaseDef, PhaseModel
 from forgestack.workflow.renderer import render_agents_config, render_plugin_toml
 
 
+def test_shipped_plugin_matches_generated_defaults():
+    import tomllib
+
+    from forgestack.assets import plugin_template
+
+    shipped = tomllib.loads(plugin_template().read_text())
+    generated = tomllib.loads(render_plugin_toml(PhaseModel.default()))
+    assert shipped == generated
+
+
 def test_render_default_plugin_toml_matches_current_contract():
     out = render_plugin_toml(PhaseModel.default())
     assert 'name = "forgestack"' in out
     assert "cyclic = false" in out
     assert "[prompts]" in out
     for key in ("research", "planning", "running", "review"):
-        assert f"{key} = \"\"\"" in out
+        assert f"{key} = \"" in out
         assert "{task}" in out
+
+
+def test_render_plugin_roundtrips_special_prompt_text():
+    import tomllib
+
+    m = PhaseModel.default()
+    text = 'Task:\n{task}\nUse """quoted""" text and C:\\temp.\tEnd.'
+    m.phases[1].prompt = text
+    parsed = tomllib.loads(render_plugin_toml(m))
+    assert parsed["prompts"]["planning"] == text
+
+
+def test_render_plugin_skips_research_when_disabled():
+    import tomllib
+
+    m = PhaseModel.default()
+    m.research = False
+    parsed = tomllib.loads(render_plugin_toml(m))
+    assert "research" not in parsed["prompts"]
 
 
 def test_render_cyclic_flag():
