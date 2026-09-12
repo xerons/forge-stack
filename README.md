@@ -60,6 +60,7 @@ forgestack setup     # detect + (with approval) install tools, install ForgeStac
 forgestack setup --scope project   # install ForgeStack assets into this project
 forgestack init      # validate + prepare this project
 forgestack manager   # launch a persistent Manager session (Codex by default)
+forgestack orchestrate FS-4  # preflight one approved Plane work item
 ```
 
 `setup` asks before installing external tools and installs ForgeStack's skills and AGTX
@@ -112,6 +113,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the full design.
 | `forgestack init` | Project bootstrap: validate Git repo, detect BMAD, verify compatibility |
 | `forgestack agents` | Dynamic provider/CLI routing configuration |
 | `forgestack manager` | Persistent human-facing entry point |
+| `forgestack orchestrate` | Preflight/start one explicitly targeted tracker work item |
 | `forgestack open` | Create/attach the configured workspace |
 | `forgestack board` | Open or attach AGTX |
 | `forgestack status` | Compact engineering-view summary |
@@ -124,6 +126,29 @@ See [`docs/architecture.md`](docs/architecture.md) for the full design.
 
 Global: `~/.config/forgestack/config.toml`
 Project: `.forgestack.toml`
+
+When Plane is configured as the tracker, keep the API key outside Git and point
+ForgeStack at its environment variable from project config:
+
+```toml
+[tracker]
+provider = "plane"
+workspace_slug = "your-workspace"
+project_id = "your-plane-project-uuid"
+project_identifier = "FS"
+api_key_env = "PLANE_API_KEY"
+```
+
+The first Orchestrator slice is intentionally explicit:
+
+```bash
+forgestack orchestrate FS-4                         # read-only approval preflight
+forgestack orchestrate FS-4 --child "Implement API" --start
+```
+
+`--start` creates only the named child work items, moves the approved parent to
+`In Progress`, and records a concise Plane comment. Worker dispatch remains a
+separate, explicit step; workers never write to Plane directly.
 
 Project values override global values in a deep merge. See [architecture](docs/architecture.md)
 and the workflow documentation for the supported configuration surface.

@@ -36,7 +36,7 @@ def cli() -> int:
         if not Confirm.ask("Launch the project-selected Manager agent?", default=False):
             console.print("Manager launch cancelled.")
             return 1
-    instructions = _manager_instructions(root)
+    instructions = _manager_instructions(root, getattr(cfg, "tracker", None))
 
     if not installed.get("agtx"):
         console.print("[yellow]AGTX not detected — limited functionality.[/yellow]")
@@ -77,16 +77,24 @@ def _manager_command(agent: str, root: Path, instructions: str) -> list[str] | N
     return None
 
 
-def _manager_instructions(root: Path) -> str:
+def _manager_instructions(root: Path, tracker=None) -> str:
     """Load the product Manager contract without replacing Codex's AGENTS chain."""
     skill = asset_root() / "skills" / "forgestack" / "manager" / "SKILL.md"
     if skill.is_file():
         body = skill.read_text()
     else:
         body = "Coordinate the project as Manager: refine requirements, route AGTX work, and do not implement production code."
-    return (
+    context = (
         "You are the ForgeStack Manager for the Git project at "
         f"{root}.\n\n{body}\n\n"
-        "Start by inspecting the project and current AGTX task state. Keep the Product Owner "
-        "in control of product decisions, and report the next concrete action."
+        "Start by inspecting the project and report the next concrete action."
     )
+    if tracker is not None and tracker.provider:
+        context += (
+            " The configured human project system is the tracker provider "
+            f"'{tracker.provider}'. Use its official MCP integration for planning context; "
+            "keep tracker state human-visible and do not let workers update it directly."
+        )
+    else:
+        context += " The current local execution runtime is AGTX; inspect its task state when relevant."
+    return context

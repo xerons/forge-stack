@@ -25,3 +25,10 @@ def test_phases_smoke() -> None:
     result = runner.invoke(app, ["phases", "--help"])
     assert result.exit_code == 0
     assert "scaffold" in result.stdout
+
+
+def test_orchestrate_smoke() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["orchestrate", "--help"])
+    assert result.exit_code == 0
+    assert "--child" in result.stdout

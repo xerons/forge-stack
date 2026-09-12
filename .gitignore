@@ -31,3 +31,6 @@ venv/
 
 # Project drafts
 .draft/
+
+# Serena
+.serena/

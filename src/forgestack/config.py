@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import paths
+from .tracker.config import TrackerConfig
 from .workflow.model import PhaseDef
 
 
@@ -24,6 +25,7 @@ class Config:
     workflow_engine: str = "agtx"
     agents: dict[str, str] = field(default_factory=dict)
     integrations: dict[str, str | bool] = field(default_factory=dict)
+    tracker: TrackerConfig = field(default_factory=TrackerConfig)
     runtime_workspace: str | None = None
     values: dict = field(default_factory=dict)
     workflow_research: bool = True
@@ -40,6 +42,7 @@ class Config:
             workflow_engine=wf.get("engine", "agtx"),
             agents=data.get("agents", {}),
             integrations=data.get("integrations", {}),
+            tracker=TrackerConfig.from_dict(data.get("tracker")),
             runtime_workspace=data.get("runtime", {}).get("workspace"),
             workflow_research=bool(wf.get("research", True)),
             workflow_cyclic=bool(wf.get("cyclic", False)),
@@ -112,6 +115,15 @@ def render_toml(config: Config) -> str:
         lines.append("[integrations]")
         for key, val in config.integrations.items():
             lines.append(_fmt_kv(key, val))
+        lines.append("")
+    if config.tracker.provider:
+        lines.append("[tracker]")
+        lines.append(_fmt_kv("provider", config.tracker.provider))
+        lines.append(_fmt_kv("base_url", config.tracker.base_url))
+        lines.append(_fmt_kv("workspace_slug", config.tracker.workspace_slug))
+        lines.append(_fmt_kv("project_id", config.tracker.project_id))
+        lines.append(_fmt_kv("project_identifier", config.tracker.project_identifier))
+        lines.append(_fmt_kv("api_key_env", config.tracker.api_key_env))
         lines.append("")
     if config.runtime_workspace:
         lines += ["[runtime]", f'workspace = "{config.runtime_workspace}"', ""]

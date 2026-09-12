@@ -29,6 +29,7 @@ def test_load_config_with_missing_file(tmp_path: Path) -> None:
     cfg = load_config(tmp_path)
     assert cfg.profile == "default"
     assert cfg.agents == {}
+    assert cfg.tracker.provider == ""
 
 
 def test_render_toml_roundtrip() -> None:
@@ -36,6 +37,23 @@ def test_render_toml_roundtrip() -> None:
     rendered = render_toml(cfg)
     assert "profile = \"test\"" in rendered
     assert "running = \"opencode\"" in rendered
+
+
+def test_tracker_config_roundtrips_without_a_secret() -> None:
+    cfg = Config.from_dict(
+        {
+            "tracker": {
+                "provider": "plane",
+                "workspace_slug": "my-workspace",
+                "project_id": "project-id",
+                "project_identifier": "FS",
+            }
+        }
+    )
+    rendered = render_toml(cfg)
+    assert 'provider = "plane"' in rendered
+    assert 'project_identifier = "FS"' in rendered
+    assert "api_key =" not in rendered
 
 
 def test_render_toml_roundtrips_special_phase_text() -> None:
