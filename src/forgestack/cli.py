@@ -1,5 +1,7 @@
 """ForgeStack CLI root."""
 
+from typing import Annotated
+
 import typer
 
 from .commands import (
@@ -10,6 +12,7 @@ from .commands import (
     init_cmd,
     manager_cmd,
     open_cmd,
+    orchestrate_cmd,
     phases_cmd,
     setup_cmd,
     status_cmd,
@@ -46,6 +49,21 @@ def agents() -> None:
 @app.command()
 def manager() -> None:
     raise SystemExit(manager_cmd.cli())
+
+
+@app.command()
+def orchestrate(
+    work_item: Annotated[str, typer.Argument(help="Plane identifier such as FS-4.")],
+    child: Annotated[
+        list[str] | None,
+        typer.Option("--child", help="Explicit approved child work-item name."),
+    ] = None,
+    start: Annotated[
+        bool,
+        typer.Option("--start", help="Apply the preflight and start execution."),
+    ] = False,
+) -> None:
+    raise SystemExit(orchestrate_cmd.cli(work_item, tuple(child or ()), start=start))
 
 
 @app.command()

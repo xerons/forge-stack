@@ -7,7 +7,7 @@ ForgeStack is a thin, opinionated **integration/orchestration layer** over exter
 ```text
               CLI (typer)
                 │
-   unified config ──────────► adapters
+   unified config ──────────► adapters / tracker providers
         ▲                        │
         │          ┌─────────────┼────────────────┐
    profile/merge   │            │                │
@@ -27,6 +27,9 @@ ForgeStack is a thin, opinionated **integration/orchestration layer** over exter
 - `forgestack/assets.py` — locates product-owned installable assets in the source tree (`skills/forgestack/`, `agtx/plugins/forgestack/plugin.toml`).
 - `forgestack/adapters/protocol.py` — the single adapter Protocol each tool implements.
 - `forgestack/adapters/registry.py` — manifest-driven list of adapters by category.
+- `forgestack/tracker/protocol.py` — provider-neutral work-item, state, and comment contracts.
+- `forgestack/tracker/plane.py` — Plane REST provider for the manual Orchestrator slice.
+- `forgestack/commands/orchestrate_cmd.py` — explicit target preflight and child creation gate.
 - `forgestack/commands/` — one module per command. `setup` detects + installs ForgeStack assets; `phases` and `agents` write config/plugin through `write_managed`.
 - `forgestack/workflow/` — AGTX phase model, config parsing, validation, and plugin render.
 - `skills/forgestack/` — product-owned skill suite (migrated from scrum-stack prototype).
@@ -48,3 +51,5 @@ The manifest is a single JSON file per install root; keys are paths relative to 
 - Thin wrappers; upstream does the heavy lifting.
 - Adapters never vendored. Install only after `y/N` approval with commands displayed.
 - All state that upstream owns (AGTX, herdr, skills dirs) is invoked via CLI/API, never DB manipulation.
+- Tracker state is human-visible project truth. The Plane provider uses the current
+  `/work-items/` API and environment-sourced credentials; Linear and Huly remain future providers.
